@@ -7,3 +7,5 @@ add line
     export PATH="$PATH:/usr/local/bin/abctl"
 source ~/.bashrc
 
+refer the following for reference:
+https://docs.airbyte.com/using-airbyte/getting-started/oss-quickstart
