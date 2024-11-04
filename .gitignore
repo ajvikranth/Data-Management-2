@@ -1,2 +1,6 @@
 airflow/logs/*
 abctl/
+__pycache__
+gcp.json
+.env
+dbt_venv
