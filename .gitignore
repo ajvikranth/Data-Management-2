@@ -4,3 +4,4 @@ __pycache__
 gcp.json
 .env
 dbt_venv
+logs

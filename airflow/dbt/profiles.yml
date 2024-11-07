@@ -1,0 +1,14 @@
+job_desc_transform:
+  outputs:
+    dev:
+      dataset: daily_job_postings
+      job_execution_timeout_seconds: 300
+      job_retries: 1
+      keyfile: /usr/app/dbt/gcp.json
+      location: EU
+      method: service-account
+      priority: interactive
+      project: data-management-2-440220
+      threads: 5
+      type: bigquery
+  target: dev

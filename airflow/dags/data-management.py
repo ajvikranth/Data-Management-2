@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from requests import Response
 from datetime import datetime
 from dotenv import load_dotenv
@@ -8,6 +9,8 @@ from airflow import DAG
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from airflow.operators.python import PythonOperator
+from airflow.operators.docker_operator import DockerOperator
+from docker.types import Mount
 
 
 load_dotenv()
@@ -42,8 +45,9 @@ def paginate(response: Response) -> dict:
 
     print(f"page_count {page_count} - page {page}")
 
-    if page < page_count and page < 3:
-        return dict(data={"location":"",
+    if page < page_count and page <= 1:
+        time.sleep(2)
+        return dict(data={"location":"ireland",
                           "page": page + 1,
                           "api_key": muse_api_key})
 
@@ -57,7 +61,7 @@ with DAG(dag_id="api_external",
     method="GET",
     http_conn_id="muse_api",
     endpoint="/api/public/jobs",
-    data={"location":"",
+    data={"location":"ireland",
           "page": 1,
           "api_key": muse_api_key},
     pagination_function=paginate,
@@ -71,5 +75,21 @@ with DAG(dag_id="api_external",
         provide_context=True,
     )
 
+    dbt = DockerOperator(
+        task_id='docker_command_sleep',
+        image="ghcr.io/dbt-labs/dbt-bigquery:1.8.2",
+        container_name='aj-dbt',
+        api_version='auto',
+        auto_remove=True,
+        entrypoint = "/bin/bash",
+        mounts = [Mount(
+            source="/home/astro/projects/Data-Management-2/airflow/dbt", target="/usr/app/dbt", type="bind"),],
+        working_dir = "/usr/app/dbt/job_desc_transform",
+        command="-c 'dbt debug --profiles-dir /usr/app/dbt/'", 
+        docker_url="tcp://docker-proxy:2375",
+        network_mode="host",
+        mount_tmp_dir = False
+        )
+
 #defining the flow 
-    load_api_data >> save_to_gcs
+    load_api_data >> save_to_gcs >> dbt
