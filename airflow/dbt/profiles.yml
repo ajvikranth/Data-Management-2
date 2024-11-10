@@ -1,6 +1,6 @@
 job_desc_transform:
   outputs:
-    dev:
+    daily:
       dataset: daily_job_postings
       job_execution_timeout_seconds: 300
       job_retries: 1
@@ -11,4 +11,15 @@ job_desc_transform:
       project: data-management-2-440220
       threads: 5
       type: bigquery
-  target: dev
+    historic:
+      dataset: historic_job_postings
+      job_execution_timeout_seconds: 300
+      job_retries: 1
+      keyfile: /usr/app/dbt/gcp.json
+      location: us-east1
+      method: service-account
+      priority: interactive
+      project: data-management-2-440220
+      threads: 5
+      type: bigquery
+  target: daily

@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from airflow import DAG
 from airflow.providers.http.operators.http import HttpOperator
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
-from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
 from airflow.operators.python import PythonOperator
 from airflow.operators.docker_operator import DockerOperator
@@ -67,9 +66,9 @@ def paginate(response: Response) -> dict:
                           "page": page + 1,
                           "api_key": muse_api_key})
 
-with DAG(dag_id="api_external",
-         start_date=datetime(2023,1,1),
-         schedule_interval="0 * * * *",
+with DAG(dag_id="Daily_Job_Posting_Data_Management",
+         start_date=datetime(2024,1,1),
+         schedule_interval="@daily",
          catchup=False) as dag:
     
     load_api_data = HttpOperator(
@@ -90,24 +89,7 @@ with DAG(dag_id="api_external",
         python_callable=save_to_gcs,
         provide_context=True,
     )
-
-    dbt = DockerOperator(
-        task_id='dbt_transformation',
-        image="ghcr.io/dbt-labs/dbt-bigquery:1.8.2",
-        container_name='aj-dbt',
-        api_version='auto',
-        auto_remove=True,
-        entrypoint = "/bin/bash",
-        mounts = [Mount(
-            source="/home/astro/projects/Data-Management-2/airflow/dbt", target="/usr/app/dbt", type="bind"),],
-        working_dir = "/usr/app/dbt/job_desc_transform",
-        command="-c 'dbt run --select stage_table -t dev --profiles-dir /usr/app/dbt/'", 
-        docker_url="tcp://docker-proxy:2375",
-        network_mode="host",
-        mount_tmp_dir = False
-        )
     
-
     load_json = BigQueryInsertJobOperator(
         task_id='gcs_to_bigquery',
         configuration={
@@ -129,6 +111,22 @@ with DAG(dag_id="api_external",
     )
 
     load_json.template_ext = () 
+
+    dbt = DockerOperator(
+        task_id='dbt_transformation',
+        image="ghcr.io/dbt-labs/dbt-bigquery:1.8.2",
+        container_name='aj-dbt',
+        api_version='auto',
+        auto_remove=True,
+        entrypoint = "/bin/bash",
+        mounts = [Mount(
+            source="/home/astro/projects/Data-Management-2/airflow/dbt", target="/usr/app/dbt", type="bind"),],
+        working_dir = "/usr/app/dbt/job_desc_transform",
+        command="-c 'dbt run --select stage_table -t daily --profiles-dir /usr/app/dbt/'", 
+        docker_url="tcp://docker-proxy:2375",
+        network_mode="host",
+        mount_tmp_dir = False
+        )
 
 #defining the flow 
     load_api_data >> save_to_gcs >> load_json >> dbt
