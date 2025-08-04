@@ -31,7 +31,13 @@ The project implements two ELT pipelines:
   - Loads data into data warehouse for visualization
 
 ***Airflow DAG***: airflow_daily_job_dag.py  
-***Key Task***: Incremental materialization for new data
+***Key Task***: Incremental materialization for new data  
+
+<p align="center">
+  <img src="https://github.com/ajvikranth/Data-Management-2/blob/master/airflow/pipeline1.png" 
+       alt="Daily Job Posting Pipeline" 
+       style="background-color:white; padding:10px;">
+</p> 
 
 ### 2️⃣ Historic Job Posting Pipeline
   - Processes bulk historical job posting datasets
@@ -42,7 +48,14 @@ The project implements two ELT pipelines:
     - Left joins with default values
   - Enables backfilling for long-term analytics
 ***Airflow DAG***: airflow_historic_job_dag.py  
-***Key Task***: Full materialization and union of multiple sources
+***Key Task***: Full materialization and union of multiple sources  
+
+<p align="center">
+  <img src="https://github.com/ajvikranth/Data-Management-2/blob/master/airflow/pipeline2.png" 
+       alt="Daily Job Posting Pipeline" 
+       style="background-color:white; padding:10px;">
+</p> 
+
 
 ## 🏗️ Tech Stack
 Orchestration: Apache Airflow  
